@@ -144,7 +144,7 @@ async function main() {
             xvfb.stopSync()
         }
 
-        if(convert){
+        if(convert == "true"){
             convertAndCopy(exportname)
         }else{
             copyOnly(exportname)
