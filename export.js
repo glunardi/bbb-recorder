@@ -7,12 +7,12 @@ const platform = os.platform();
 const { copyToPath, playbackFile } = require('./env');
 const spawn = require('child_process').spawn;
 
+var width       = 1920;
+var height      = 1080;
 var xvfb        = new Xvfb({
     silent: true,
-    xvfb_args: ["-screen", "0", "1280x800x24", "-ac", "-nolisten", "tcp", "-dpi", "96", "+extension", "RANDR"]
+    xvfb_args: ["-screen", "0", `${width}x${height}x24`, "-ac", "-nolisten", "tcp", "-dpi", "96", "+extension", "RANDR"]
 });
-var width       = 1280;
-var height      = 720;
 var options     = {
   headless: false,
   args: [
@@ -48,17 +48,16 @@ async function main() {
             console.warn('URL undefined!');
             process.exit(1);
         }
-        // Verify if recording URL has the correct format
-        var urlRegex = new RegExp('^https?:\\/\\/.*\\/playback\\/presentation\\/2\\.0\\/' + playbackFile + '\\?meetingId=[a-z0-9]{40}-[0-9]{13}');
-        if(!urlRegex.test(url)){
-            console.warn('Invalid recording URL!');
-            process.exit(1);
-        }
+
+	const myURL = new URL(url);
+	const meetingId = myURL.searchParams.get('meetingId');
+	console.warn('MeetingID: ' + meetingId);
+	console.warn('Start Time: ' + myURL.searchParams.get('t'));
 
         var exportname = process.argv[3];
         // Use meeting ID as export name if it isn't defined or if its value is "MEETING_ID"
         if(!exportname || exportname == "MEETING_ID"){
-            exportname = url.split("=")[1] + '.webm';
+            exportname = meetingId + '.webm';
         }
 
         var duration = process.argv[4];
@@ -70,6 +69,7 @@ async function main() {
             console.warn('Duration must be a natural number!');
             process.exit(1);
         }
+        console.warn('Duration: ' + duration);
 
         var convert = process.argv[5]
         if(!convert){
@@ -118,6 +118,7 @@ async function main() {
         await page.waitForSelector('button[class=acorn-play-button]');
         await page.$eval('#navbar', element => element.style.display = "none");
         await page.$eval('#copyright', element => element.style.display = "none");
+        await page.$eval('#chat', element => element.style.overflow = "hidden");
         await page.$eval('.acorn-controls', element => element.style.opacity = "0");
         await page.click('button[class=acorn-play-button]', {waitUntil: 'domcontentloaded'});
 
@@ -168,8 +169,8 @@ function convertAndCopy(filename){
         fs.mkdirSync(copyToPath);
     }
 
-    console.log(copyTo);
-    console.log(copyFrom);
+    console.warn('ffmpeg input file: ' + copyTo);
+    console.warn('ffmpeg output file: ' + copyFrom);
 
     const ls = spawn('ffmpeg',
         [   '-y',
