@@ -1,0 +1,11 @@
+version: '3.3'
+services:
+  bbb-streamer:
+    image: lpc2020recorder
+    build: .
+    container_name: lpc2020recorder
+    environment:
+      - TZ=America/New_York
+
+    volumes:
+      - ./videodata:/video
